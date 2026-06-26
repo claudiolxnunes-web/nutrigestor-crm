@@ -8,6 +8,8 @@ type StoredSession = {
   session_id: string;
   user_id: string;
   started_at: number; // epoch ms
+  organizacao_id?: string | null;
+  representante_id?: string | null;
   ip?: string | null;
 };
 
@@ -83,7 +85,14 @@ export const logLogin = async (user: { id: string; email?: string | null }) => {
   const ip = await tryFetchIp();
   const session_id = crypto.randomUUID();
   const started_at = Date.now();
-  setStored({ session_id, user_id: user.id, started_at, ip });
+  setStored({
+    session_id,
+    user_id: user.id,
+    started_at,
+    organizacao_id: ctx.organizacao_id,
+    representante_id: ctx.id,
+    ip,
+  });
 
   await supabase.from("access_logs").insert({
     user_id: user.id,
@@ -105,7 +114,8 @@ export const logLogout = async () => {
   try {
     await supabase.from("access_logs").insert({
       user_id: s.user_id,
-      organizacao_id: null,
+      organizacao_id: s.organizacao_id ?? null,
+      representante_id: s.representante_id ?? null,
       evento: "logout",
       session_id: s.session_id,
       ip: s.ip ?? null,
@@ -129,6 +139,8 @@ export const useAccessUnloadTracker = () => {
       const dur = Math.max(0, Math.round((Date.now() - s.started_at) / 1000));
       const payload = {
         user_id: s.user_id,
+        organizacao_id: s.organizacao_id ?? null,
+        representante_id: s.representante_id ?? null,
         evento: "logout",
         session_id: s.session_id,
         ip: s.ip ?? null,
@@ -147,7 +159,7 @@ export const useAccessUnloadTracker = () => {
           headers: {
             "Content-Type": "application/json",
             apikey: (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${JSON.parse(localStorage.getItem(`sb-${(import.meta as any).env.VITE_SUPABASE_PROJECT_ID}-auth-token`) ?? "{}")?.access_token ?? ""}`,
+            Authorization: `Bearer ${JSON.parse(localStorage.getItem(`sb-${new URL((import.meta as any).env.VITE_SUPABASE_URL).hostname.split(".")[0]}-auth-token`) ?? "{}")?.access_token ?? ""}`,
             Prefer: "return=minimal",
           },
           body: JSON.stringify(payload),

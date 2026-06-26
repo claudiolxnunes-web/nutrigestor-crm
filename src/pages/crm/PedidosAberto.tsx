@@ -121,7 +121,7 @@ const statusVariant = (s: string | null) => {
 
 export default function PedidosAberto() {
   const { user } = useAuth();
-  const { orgId } = useOrg();
+  const { orgId, loading: orgLoading } = useOrg();
   const { isGestor, isRC, representativeCode, gestorCode, loading: roleLoading } = useRole();
   const fileRef = useRef<HTMLInputElement>(null);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
@@ -134,7 +134,7 @@ export default function PedidosAberto() {
   const [calculating, setCalculating] = useState(false);
 
   const carregar = async () => {
-    if (!orgId || roleLoading) return;
+    if (!orgId || roleLoading || orgLoading) return;
     setLoading(true);
     
     try {
@@ -152,14 +152,15 @@ export default function PedidosAberto() {
   };
 
   useEffect(() => {
-    if (!roleLoading) {
+    if (!roleLoading && !orgLoading) {
       carregar();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orgId, roleLoading, isGestor, representativeCode]);
+  }, [orgId, roleLoading, orgLoading, isGestor, representativeCode]);
 
   const handleFile = async (file: File) => {
-    if (!user || !orgId) return toast.error("Sem organização");
+    if (orgLoading) return toast.info("Carregando organização. Tente novamente em instantes.");
+    if (!user || !orgId) return toast.error("Sua conta não está vinculada a uma organização.");
     if (!isGestor) return toast.error("Apenas gestor pode importar");
     setImporting(true);
     try {
@@ -296,7 +297,7 @@ export default function PedidosAberto() {
         subtitle={snapshot ? `Snapshot de ${new Date(snapshot + "T12:00").toLocaleDateString("pt-BR")}` : "Carteira de pedidos pendentes de faturamento"}
         actions={
           <div className="flex gap-2">
-          <Button variant="outline" onClick={carregar} disabled={loading}>
+          <Button variant="outline" onClick={carregar} disabled={loading || orgLoading}>
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
           {isGestor && (
@@ -312,9 +313,9 @@ export default function PedidosAberto() {
                 className="hidden"
                 onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
               />
-              <Button onClick={() => fileRef.current?.click()} disabled={importing}>
+              <Button onClick={() => fileRef.current?.click()} disabled={importing || orgLoading || !orgId}>
                 {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {importing ? "Importando..." : "Importar Snapshot"}
+                {orgLoading ? "Carregando..." : importing ? "Importando..." : "Importar Snapshot"}
               </Button>
               {pedidos.length > 0 && (
                 <Button variant="outline" onClick={limpar}>

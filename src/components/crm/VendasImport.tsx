@@ -361,9 +361,9 @@ const COL_MAP: Record<string, string> = {
   "cod filial": "cod_filial", "cod. filial": "cod_filial",
   "cód filial": "cod_filial", "cód. filial": "cod_filial",
   "cod cfop": "cod_cfop", "cfop": "cod_cfop",
-  "moeda": "moeda",
+  "moeda": "moeda", "moeda pedido": "moeda",
   "mes ano": "mes_ano", "mês/ano": "mes_ano", "mes/ano": "mes_ano",
-  "fl vef": "fl_vef",
+  "fl vef": "fl_vef", "fl_vef": "fl_vef",
   "cod grupo": "cod_grupo", "cód grupo": "cod_grupo", "cód. grupo": "cod_grupo",
   "grupo cliente": "grupo_cliente", "grupo de cliente": "grupo_cliente",
   "cod cliente": "cod_cliente", "cód. cliente": "cod_cliente", "cod. cliente": "cod_cliente", "código cliente": "cod_cliente",
@@ -381,15 +381,17 @@ const COL_MAP: Record<string, string> = {
   "linha": "linha",
   "solucao": "solucao", "solução": "solucao",
   "subsolucao": "subsolucao", "subsolução": "subsolucao", "sub solucao": "subsolucao",
+  "grv": "grv", "gnv": "gnv", "gev": "gnv",
   "customizado": "customizado",
   "cod rc": "cod_rc", "cód. rc": "cod_rc", "cod. rc": "cod_rc", "rc": "cod_rc",
   "representante": "representante", "vendedor": "representante", "nome rc": "representante",
-  "qtde sacos": "qtde_sacos", "qtd sacos": "qtde_sacos", "quantidade sacos": "qtde_sacos",
-  "preco saco": "preco_saco", "preço saco": "preco_saco",
-  "preco kg": "preco_kg", "preço kg": "preco_kg",
+  "qtde sacos": "qtde_sacos", "qtde. sacos": "qtde_sacos", "qtd sacos": "qtde_sacos", "quantidade sacos": "qtde_sacos",
+  "preco saco": "preco_saco", "preço saco": "preco_saco", "preco por saco": "preco_saco", "preço por saco": "preco_saco",
+  "preco kg": "preco_kg", "preço kg": "preco_kg", "preco por kg": "preco_kg", "preço por kg": "preco_kg",
   "pmr": "pmr",
   "desconto": "desconto_pct", "desconto %": "desconto_pct", "desconto pct": "desconto_pct", "% desconto": "desconto_pct",
    "volume kg": "volume_kg", "volume": "volume_kg", "kg": "volume_kg", "peso": "volume_kg",
+  "volume (vendas)": "volume_kg", "volume vendas": "volume_kg",
   "volume (vendas + bon.)": "volume_kg", "volume vendas + bon.": "volume_kg",
   "volume vendas + bon": "volume_kg", "volume (vendas + bon)": "volume_kg",
   "volume convertido": "volume_convertido",
@@ -433,6 +435,28 @@ const NUMERIC_COLS = new Set([
   "comissao_pct", "comissao_realizada",
 ]);
 const DATE_COLS = new Set(["data_nf", "data_pedido"]);
+
+const supabaseErrorText = (error: any) =>
+  [error?.message, error?.details, error?.hint, error?.code]
+    .filter(Boolean)
+    .join(" | ");
+
+const isSummaryRow = (row: any[], obj: Record<string, any>) => {
+  const marker = [
+    obj.nota_fiscal,
+    obj.pedido,
+    obj.cod_cliente,
+    obj.nome_cliente,
+    obj.cod_produto,
+    obj.nome_produto,
+    ...row.slice(0, 8),
+  ]
+    .map((v) => norm(String(v ?? "")))
+    .filter(Boolean)
+    .join(" ");
+
+  return /\b(total|totais|subtotal|sub total|somatoria|somatório|soma)\b/.test(marker);
+};
 
 /** Detecta a linha de cabeçalho dentro das primeiras N linhas: a que mais reconhece colunas */
 const detectHeaderRow = (rows: any[][], maxScan = 15): number => {
@@ -501,6 +525,7 @@ const detectHeaderRow = (rows: any[][], maxScan = 15): number => {
 
       const seen = new Set<string>();
       const payload: any[] = [];
+      let skippedSummary = 0;
       for (const row of dataRows) {
         if (!row || row.every((c) => c === "" || c == null)) continue;
         const obj: any = { user_id: user.id, organizacao_id: orgId };
@@ -518,9 +543,16 @@ const detectHeaderRow = (rows: any[][], maxScan = 15): number => {
         if (obj.mes_ano && !/^\d{4}-\d{2}$/.test(obj.mes_ano)) {
           obj.mes_ano = obj.data_nf ? toMesAno(obj.data_nf) : null;
         }
+        if (isSummaryRow(row, obj)) {
+          skippedSummary += 1;
+          continue;
+        }
         // Chave dedup: NF + cod_produto + cod_cliente
         const key = `${obj.nota_fiscal ?? ""}|${obj.cod_produto ?? ""}|${obj.cod_cliente ?? ""}`;
-        if (key === "||") continue;
+        if (!obj.nota_fiscal || !obj.cod_produto || !obj.cod_cliente) {
+          skippedSummary += 1;
+          continue;
+        }
         if (seen.has(key)) continue;
         seen.add(key);
         payload.push(obj);
@@ -547,6 +579,9 @@ const detectHeaderRow = (rows: any[][], maxScan = 15): number => {
         "[vendas-import] colunas detectadas:",
         Object.keys(colIdx),
       );
+      if (skippedSummary > 0) {
+        console.info(`[vendas-import] ${skippedSummary} linha(s) de total/resumo ou sem chave completa foram ignoradas.`);
+      }
 
       // Upsert em lotes — idempotente por (organizacao_id, nota_fiscal, cod_produto, cod_cliente)
       const BATCH = 500;
@@ -568,7 +603,7 @@ const detectHeaderRow = (rows: any[][], maxScan = 15): number => {
             "primeira linha do lote:",
             chunk[0],
           );
-          errosLote.push(`Lote ${i / BATCH + 1}: ${error.message}`);
+          errosLote.push(`Lote ${i / BATCH + 1}: ${supabaseErrorText(error)}`);
           continue; // não aborta — segue tentando os próximos lotes
         }
         processed += data?.length ?? chunk.length;

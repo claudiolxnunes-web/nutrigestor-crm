@@ -10,18 +10,43 @@
      queryKey: ["user-org", user?.id],
      queryFn: async () => {
        if (!user) return null;
-       const { data: m } = await supabase
+       const { data: m, error: memberError } = await supabase
          .from("organizacao_membros")
          .select("organizacao_id, organizacoes(nome,status,data_expiracao)")
          .eq("user_id", user.id)
          .maybeSingle();
-       if (!m) return null;
-       const org = (m as any)?.organizacoes ?? null;
+
+       if (m) {
+         const org = (m as any)?.organizacoes ?? null;
+         return {
+           orgId: (m as any)?.organizacao_id as string,
+           orgNome: org?.nome as string | null,
+           orgStatus: org?.status as string | null,
+           orgExpiracao: org?.data_expiracao as string | null,
+         };
+       }
+
+       if (memberError) {
+         console.warn("[useOrg] organizacao_membros lookup failed:", memberError);
+       }
+
+       const { data: orgId, error: rpcError } = await supabase.rpc("get_user_org", { _user_id: user.id });
+       if (rpcError || !orgId) {
+         if (rpcError) console.warn("[useOrg] get_user_org failed:", rpcError);
+         return null;
+       }
+
+       const { data: org } = await supabase
+         .from("organizacoes")
+         .select("nome,status,data_expiracao")
+         .eq("id", orgId)
+         .maybeSingle();
+
        return {
-         orgId: (m as any)?.organizacao_id as string,
-         orgNome: org?.nome as string,
-         orgStatus: org?.status as string,
-         orgExpiracao: org?.data_expiracao as string,
+         orgId: orgId as string,
+         orgNome: org?.nome ?? null,
+         orgStatus: org?.status ?? null,
+         orgExpiracao: org?.data_expiracao ?? null,
        };
      },
      enabled: !!user && !authLoading,

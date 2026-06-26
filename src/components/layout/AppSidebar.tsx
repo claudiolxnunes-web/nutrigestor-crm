@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
  import { useRole } from "@/hooks/useRole";
  import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrg } from "@/hooks/useOrg";
 import { useEffect, useState, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -87,6 +88,7 @@ export const AppSidebar = React.memo(() => {
    const collapsed = state === "collapsed";
    const navigate = useNavigate();
    const { isGestor } = useRole();
+   const { orgId } = useOrg();
    const { user } = useAuth();
 
    const { data: isSuper = false } = useQuery({
@@ -101,16 +103,19 @@ export const AppSidebar = React.memo(() => {
    });
 
    const { data: pendingAlertsCount = 0 } = useQuery({
-     queryKey: ["pending-alerts-count"],
+     queryKey: ["pending-alerts-count", orgId],
      queryFn: async () => {
+       if (!orgId) return 0;
        const { count, error } = await supabase
          .from("ai_email_analyses")
          .select("*", { count: 'exact', head: true })
+         .eq("organizacao_id", orgId)
          .eq("status", "pending");
        
        if (error) return 0;
        return count || 0;
      },
+     enabled: !!orgId && isGestor,
      refetchInterval: 30000, // Sync every 30s
    });
 
