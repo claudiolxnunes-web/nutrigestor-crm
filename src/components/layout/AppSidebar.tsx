@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Building2, Package, Target, CalendarDays, ClipboardList, Upload, BarChart3, LogOut, Trophy, UserCircle, Smartphone, Shield, PackageOpen, Kanban, X, Bot, Mail, Brain } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Package, Target, CalendarDays, ClipboardList, Upload, BarChart3, LogOut, Trophy, UserCircle, Smartphone, Shield, PackageOpen, Kanban, X, Bot, Mail, Brain, Activity, UserCheck } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,8 @@ const items: Item[] = [
   { title: "Integração IA", url: "/integracoes-ia", icon: Bot, gestorOnly: true },
   { title: "Planejamento IA", url: "/planejamento-ia", icon: Brain, gestorOnly: true },
   { title: "Alertas E-mails", url: "/alertas-email", icon: Mail, gestorOnly: true },
-
+  { title: "Controle de Acessos", url: "/acessos", icon: Activity, gestorOnly: true },
+  { title: "Revisão de Inativos", url: "/revisao-inativos", icon: UserCheck, gestorOnly: true },
 
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
   { title: "Configurações", url: "/configuracoes", icon: Shield, superOnly: true },

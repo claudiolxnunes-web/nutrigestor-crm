@@ -36,6 +36,8 @@ const Configuracoes = lazy(() => import("./pages/crm/Configuracoes.tsx"));
 const IntegracoesIA = lazy(() => import("./pages/IntegracoesIA.tsx"));
 const AlertasEmail = lazy(() => import("./pages/crm/AlertasEmail.tsx"));
 const PlanejamentoIAPage = lazy(() => import("./pages/crm/PlanejamentoIA.tsx"));
+const Acessos = lazy(() => import("./pages/crm/Acessos.tsx"));
+const RevisaoInativos = lazy(() => import("./pages/crm/RevisaoInativos.tsx"));
 
 const LoadingScreen = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
@@ -99,6 +101,8 @@ const AnalyticsApp = () => {
               <Route path="/integracoes-ia" element={<IntegracoesIA />} />
               <Route path="/alertas-email" element={<AlertasEmail />} />
               <Route path="/planejamento-ia" element={<PlanejamentoIAPage />} />
+              <Route path="/acessos" element={<Acessos />} />
+              <Route path="/revisao-inativos" element={<RevisaoInativos />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
