@@ -33,26 +33,15 @@ Deno.serve(async (req) => {
       return json({ error: "Nome da empresa inválido" }, 400);
     }
 
-    // 1) Cria usuário (envia e-mail de confirmação automaticamente)
-    const redirectTo = req.headers.get("origin") ? `${req.headers.get("origin")}/` : undefined;
+    // 1) Cria usuário (auto-confirmado, sem e-mail de verificação)
     const { data: created, error: createErr } = await admin.auth.admin.createUser({
       email,
       password,
-      email_confirm: false,
+      email_confirm: true,
       user_metadata: { nome_gestor, nome_empresa },
     });
     if (createErr) return json({ error: createErr.message }, 400);
     const userId = created.user!.id;
-
-    // Dispara e-mail de confirmação manualmente (createUser com email_confirm:false não envia)
-    try {
-      await admin.auth.admin.generateLink({
-        type: "signup",
-        email,
-        password,
-        options: { redirectTo },
-      });
-    } catch (_) { /* tolerante */ }
 
     // 2) Cria organização em trial (14 dias)
     const dataExpiracao = new Date();
@@ -86,7 +75,7 @@ Deno.serve(async (req) => {
       success: true,
       organizacao_id: org.id,
       trial_expira_em: org.data_expiracao,
-      message: "Empresa criada! Verifique seu e-mail para confirmar a conta.",
+      message: "Empresa criada! Você já pode fazer login.",
     });
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
