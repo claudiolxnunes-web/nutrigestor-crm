@@ -1,0 +1,141 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 dark:bg-card/70 backdrop-blur-md border border-white/40 dark:border-white/5;
+  }
+  .premium-card {
+    @apply bg-white dark:bg-card rounded-[32px] border border-white dark:border-white/5 shadow-premium;
+  }
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-glow;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 dark:bg-slate-800 rounded-full transition-colors hover:bg-slate-300 dark:hover:bg-slate-700;
+}
+
+@layer base {
+  :root {
+    /* Forest & Moss — Agro_RC */
+    --background: 96 22% 97%;
+    --foreground: 146 30% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 146 30% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 146 30% 12%;
+
+    --primary: 146 39% 17%;
+    --primary-foreground: 96 22% 97%;
+    --primary-glow: 140 33% 26%;
+
+    --secondary: 116 22% 93%;
+    --secondary-foreground: 146 39% 17%;
+
+    --muted: 110 18% 94%;
+    --muted-foreground: 146 12% 38%;
+
+    --accent: 122 21% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 48%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 140 50% 35%;
+    --warning: 38 92% 50%;
+
+    --border: 116 18% 88%;
+    --input: 116 18% 88%;
+    --ring: 140 33% 26%;
+
+    --radius: 1rem;
+
+    --gradient-sidebar: linear-gradient(180deg, #122315 0%, #0a140c 100%);
+    --gradient-premium: linear-gradient(135deg, hsl(var(--primary)) 0%, #d4ff70 100%);
+    --gradient-accent: linear-gradient(135deg, #1e3a22 0%, #2e5c35 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(96 22% 97%) 0%, hsl(110 18% 94%) 100%);
+    --shadow-card: 0 10px 30px -12px hsl(146 39% 17% / 0.10);
+    --shadow-premium: 0 24px 60px -18px hsl(146 39% 17% / 0.18);
+
+    --sidebar-background: 146 39% 10%;
+    --sidebar-foreground: 96 22% 95%;
+    --sidebar-primary: 82 100% 72%; /* Volt (Greenish Yellow) for high contrast */
+    --sidebar-primary-foreground: 146 39% 10%;
+    --sidebar-accent: 82 100% 72% / 0.15;
+    --sidebar-accent-foreground: 82 100% 72%;
+    --sidebar-border: 146 39% 15%;
+    --sidebar-ring: 82 100% 72%;
+  }
+
+  .dark {
+    --background: 146 30% 7%;
+    --foreground: 96 22% 95%;
+
+    --card: 146 28% 10%;
+    --card-foreground: 96 22% 95%;
+
+    --popover: 146 28% 10%;
+    --popover-foreground: 96 22% 95%;
+
+    --primary: 116 27% 70%;
+    --primary-foreground: 146 39% 12%;
+    --primary-glow: 122 21% 55%;
+
+    --secondary: 146 25% 14%;
+    --secondary-foreground: 96 22% 95%;
+
+    --muted: 146 22% 13%;
+    --muted-foreground: 116 12% 65%;
+
+    --accent: 122 21% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 60% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 146 22% 18%;
+    --input: 146 22% 18%;
+    --ring: 116 27% 70%;
+
+    --sidebar-background: 146 35% 6%;
+    --sidebar-foreground: 96 22% 95%;
+    --sidebar-primary: 116 27% 70%;
+    --sidebar-primary-foreground: 146 39% 12%;
+    --sidebar-accent: 116 27% 70% / 0.12;
+    --sidebar-accent-foreground: 96 22% 97%;
+    --sidebar-border: 116 27% 70% / 0.08;
+    --sidebar-ring: 116 27% 70%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
+
+  h1 { @apply text-3xl font-bold; letter-spacing: -0.02em; }
+  h2 { @apply text-2xl font-semibold; letter-spacing: -0.015em; }
+  h3 { @apply text-xl font-semibold; letter-spacing: -0.01em; }
+}

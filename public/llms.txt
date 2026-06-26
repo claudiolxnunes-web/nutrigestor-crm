@@ -1,0 +1,13 @@
+ # Agro_RC CRM
+ 
+ > CRM completo para gestão de representantes comerciais, clientes, produtos, metas e visitas no agronegócio.
+ 
+ Plataforma web (SaaS) usada por gestores e representantes comerciais (RCs) do agro para acompanhar metas, planejar visitas, registrar oportunidades e analisar desempenho.
+ 
+ ## Pages
+ 
+ - [Login / Criar conta](/auth): acesso ao sistema com trial de 14 dias.
+ 
+ ## Optional
+ 
+ - [Dashboard (área restrita)](/): visão geral da operação após login.
