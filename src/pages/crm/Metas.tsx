@@ -380,10 +380,12 @@ import { detectRegional12Layout, parsePlanNumber } from "@/utils/crm/excel";
         return;
       }
 
-      // Fallback: se o cabeçalho tem "FATURAMENTO" repetido, é layout pivotado (regional)
+      // Fallback: layout pivotado se cabeçalho tem FATURAMENTO repetido OU meses (JANEIRO..DEZEMBRO)
       const fatCount = headers.filter((h) => norm(h).includes("faturamento")).length;
-      if (fatCount >= 2) {
-        console.info("[metas-import] Layout pivotado detectado (FATURAMENTO x" + fatCount + ") — redirecionando para handleRegional12");
+      const mesesPivot = ["janeiro","fevereiro","marco","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+      const mesCount = headers.filter((h) => mesesPivot.some((m) => norm(h).includes(m))).length;
+      if (fatCount >= 2 || mesCount >= 6) {
+        console.info("[metas-import] Layout pivotado detectado (FAT x" + fatCount + ", meses x" + mesCount + ") — redirecionando para handleRegional12");
         setImporting(false);
         return handleRegional12(file, wb);
       }
@@ -741,7 +743,7 @@ import { detectRegional12Layout, parsePlanNumber } from "@/utils/crm/excel";
         for (let i = 0; i < dedupedPayload.length; i += BATCH) {
           const chunk = dedupedPayload.slice(i, i + BATCH);
           const { error } = await supabase.from("metas").upsert(chunk, {
-            onConflict: "organizacao_id,cod_rc,solucao,subsolucao,mes_ano",
+            onConflict: "organizacao_id,cod_rc,linha,mes_ano,solucao,subsolucao",
           });
           if (error) { toast.error(error.message); break; }
           inserted += chunk.length;
