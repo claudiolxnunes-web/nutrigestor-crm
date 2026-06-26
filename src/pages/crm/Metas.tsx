@@ -632,19 +632,9 @@ import { detectRegional12Layout, parsePlanNumber } from "@/utils/crm/excel";
       const payload: any[] = [];
       const errors: { linha: number; valores: string; motivo: string }[] = [];
 
-      // Layout específico do export "Metas FAT.X VOL." (Regional):
-      //  - Linha 1: meses (cada um aparece a cada 2 colunas, a partir de K)
-      //  - Linha 2: cabeçalhos — CODIGO | REPRESENTANTE | CODESP | ESPECIE |
-      //             CODSUBSO | SUBSOLUCAO | CODSOL | SOLUCAO | % | TOTAL |
-      //             FATURAMENTO | VOLUME/KG | FATURAMENTO | VOLUME/KG | ... (12 pares)
-      //  - Linha 3: total do RC (sem SOLUCAO/SUBSOLUCAO) — ignora
-      //  - Linhas 4+: dados (uma linha por SUBSOLUCAO dentro da SOLUCAO)
-      //
-      //  Pares mensais começam na coluna 10 (índice 0-based, = K).
-      //  Para o mês m (0-11): col fat = 10 + m*2 ; col vol = 11 + m*2
       const isHeaderRow = (row: any[]) => {
-        const norm0 = norm(String(row?.[0] ?? ""));
-        return norm0 === "codigo" || norm0 === "cod_rc" || norm0 === "cod rc";
+        const n0 = norm(String(row?.[0] ?? ""));
+        return n0 === "codigo" || n0 === "cod_rc" || n0 === "cod rc";
       };
       const headerIdx = aoa.findIndex(isHeaderRow);
       if (headerIdx < 0) {
@@ -652,7 +642,18 @@ import { detectRegional12Layout, parsePlanNumber } from "@/utils/crm/excel";
         setImporting(false);
         return;
       }
-      const dataStart = headerIdx + 1;
+
+      const hdr = (aoa[headerIdx] ?? []).map((c: any) => norm(String(c ?? "")));
+      const colSub = hdr.findIndex((h: string) => h === "subsolucao" || h === "sub solucao");
+      const colSol = hdr.findIndex((h: string) => h === "solucao" || h === "solução");
+      const colFirstFat = hdr.indexOf("faturamento");
+      const idxSub = colSub >= 0 ? colSub : 2;
+      const idxSol = colSol >= 0 ? colSol : 3;
+      const monthStart = colFirstFat >= 0 ? colFirstFat : 6;
+
+      const subHdr = (aoa[headerIdx + 1] ?? []).map((c: any) => norm(String(c ?? "")));
+      const hasSubHeader = subHdr.some((h: string) => h.includes("faturamento") || h.includes("volume"));
+      const dataStart = headerIdx + (hasSubHeader ? 2 : 1);
 
       let codRcAtual = "";
       let nomeAtual = "";
@@ -664,13 +665,11 @@ import { detectRegional12Layout, parsePlanNumber } from "@/utils/crm/excel";
         if (/^totais?$/i.test(codRaw)) return;
         if (codRaw) { codRcAtual = codRaw; nomeAtual = nomeRaw || nomeAtual; }
 
-        const subsolucao = String(row[5] ?? "").trim();   // F = SUBSOLUCAO
-        const solucao = String(row[7] ?? "").trim();      // H = SOLUCAO
-        // Linha de subtotal do RC: tem código mas SOLUCAO/SUBSOLUCAO vazios → ignora
+        const subsolucao = String(row[idxSub] ?? "").trim();
+        const solucao = String(row[idxSol] ?? "").trim();
         if (!solucao && !subsolucao) return;
         if (!codRcAtual) return;
 
-        // Match representante: por código (várias variações de padding) ou nome
         const padded6 = codRcAtual.padStart(6, "0");
         const semZero = codRcAtual.replace(/^0+/, "") || codRcAtual;
         let match = repByCod.get(codRcAtual) ?? repByCod.get(padded6) ?? repByCod.get(semZero);
@@ -694,10 +693,9 @@ import { detectRegional12Layout, parsePlanNumber } from "@/utils/crm/excel";
         const cod_rc = match.cod_rc;
         const representante = match.nome;
 
-        // 12 pares (FAT, VOL) começando em K (índice 10)
         for (let m = 0; m < 12; m++) {
-          const fat = parsePlanNumber(row[10 + m * 2]);
-          const vol = parsePlanNumber(row[11 + m * 2]);
+          const fat = parsePlanNumber(row[monthStart + m * 2]);
+          const vol = parsePlanNumber(row[monthStart + m * 2 + 1]);
           if (!fat && !vol) continue;
           const mes_ano = `${year}-${String(m + 1).padStart(2, "0")}`;
           payload.push({
@@ -705,7 +703,7 @@ import { detectRegional12Layout, parsePlanNumber } from "@/utils/crm/excel";
             user_id: user.id,
             cod_rc,
             representante,
-            linha: solucao || subsolucao,   // compat com código que ainda usa "linha"
+            linha: solucao || subsolucao,
             solucao: solucao || null,
             subsolucao: subsolucao || null,
             mes_ano,

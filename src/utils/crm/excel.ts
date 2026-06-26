@@ -45,10 +45,21 @@ export const parseExcelNumber = (v: any): number | null => {
 
 export const detectRegional12Layout = (aoa: any[][]): boolean => {
   if (aoa.length < 5) return false;
-  // Heurística simplificada baseada no que foi visto nos arquivos
-  const firstRow = aoa[0] ?? [];
-  return firstRow.some(c => norm(String(c)).includes("jan")) && 
-         firstRow.some(c => norm(String(c)).includes("dez"));
+  const limit = Math.min(aoa.length, 10);
+  for (let r = 0; r < limit; r++) {
+    const row = aoa[r] ?? [];
+    const hasJan = row.some((c: any) => norm(String(c)).includes("jan"));
+    const hasDez = row.some((c: any) => norm(String(c)).includes("dez"));
+    if (hasJan && hasDez) return true;
+    const hasCodigo = row.some((c: any) => {
+      const n = norm(String(c));
+      return n === "codigo" || n === "cod_rc";
+    });
+    const hasFat = row.some((c: any) => norm(String(c)).includes("faturamento"));
+    const hasSolucao = row.some((c: any) => norm(String(c)) === "solucao");
+    if (hasCodigo && hasFat && hasSolucao) return true;
+  }
+  return false;
 };
 
 export const parsePlanNumber = (v: any): number | null => {
