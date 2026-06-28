@@ -28,6 +28,7 @@ import { detectRegional12Layout, parsePlanNumber } from "@/utils/crm/excel";
     const { orgId } = useOrg();
    const inputRef = useRef<HTMLInputElement>(null);
    const inputRefOrc = useRef<HTMLInputElement>(null);
+   const inputRefRegional = useRef<HTMLInputElement>(null);
    const [importing, setImporting] = useState(false);
    const [filterMes, setFilterMes] = useState("");
 
@@ -621,6 +622,140 @@ import { detectRegional12Layout, parsePlanNumber } from "@/utils/crm/excel";
     return _orcInner(file);
   };
 
+  /** Handler DIRETO para Regional FAT x VOL — sem detecção, com log em cada passo. */
+  const handleRegionalDirect = async (file: File) => {
+    if (!user || !orgId) return;
+    setImporting(true);
+    const L = (msg: string, ...args: any[]) => console.info(`[regional-direct] ${msg}`, ...args);
+    try {
+      L("1. Lendo arquivo:", file.name);
+      const yearMatch = file.name.match(/(20\d{2})/);
+      const year = yearMatch ? yearMatch[1] : String(new Date().getFullYear());
+      L("2. Ano extraído:", year);
+
+      const buf = await file.arrayBuffer();
+      const book = XLSX.read(buf, { type: "array" });
+      const ws = book.Sheets[book.SheetNames[0]];
+      const aoa: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "", raw: true }) as any;
+      L("3. Total linhas AOA:", aoa.length);
+      L("4. Linha 0 (primeiras 12 cols):", aoa[0]?.slice(0, 12));
+      L("5. Linha 1 (primeiras 12 cols):", aoa[1]?.slice(0, 12));
+      L("6. Linha 2 (primeiras 12 cols):", aoa[2]?.slice(0, 12));
+
+      // Acha header: linha onde col 0 = "CODIGO"
+      let headerIdx = -1;
+      for (let i = 0; i < Math.min(aoa.length, 10); i++) {
+        const n0 = norm(String(aoa[i]?.[0] ?? ""));
+        if (n0 === "codigo" || n0 === "cod_rc") { headerIdx = i; break; }
+      }
+      L("7. headerIdx:", headerIdx);
+      if (headerIdx < 0) { toast.error("Cabeçalho CODIGO não encontrado"); setImporting(false); return; }
+
+      const hdr = (aoa[headerIdx] ?? []).map((c: any) => norm(String(c ?? "")));
+      L("8. Header normalizado (primeiras 12):", hdr.slice(0, 12));
+
+      // Detecta colunas por nome
+      const idxSub = hdr.findIndex((h: string) => h === "subsolucao");
+      const idxSol = hdr.findIndex((h: string) => h === "solucao");
+      const idxFat = hdr.indexOf("faturamento");
+      const monthStart = idxFat >= 0 ? idxFat : 10;
+      L("9. idxSub:", idxSub, "idxSol:", idxSol, "idxFat:", idxFat, "monthStart:", monthStart);
+
+      // Pula sub-header se existir
+      const row2 = (aoa[headerIdx + 1] ?? []).map((c: any) => norm(String(c ?? "")));
+      const hasSubHdr = row2.some((h: string) => h.includes("faturamento") || h.includes("volume"));
+      const dataStart = headerIdx + (hasSubHdr ? 2 : 1);
+      L("10. hasSubHdr:", hasSubHdr, "dataStart:", dataStart);
+
+      // Busca representantes
+      const { data: reps, error: repErr } = await (supabase.from("representantes") as any)
+        .select("cod_rc, nome").eq("organizacao_id", orgId);
+      L("11. Representantes carregados:", reps?.length ?? 0, "erro:", repErr?.message ?? "nenhum");
+      if (!reps || reps.length === 0) { toast.error("Nenhum representante cadastrado"); setImporting(false); return; }
+
+      const repByCod = new Map<string, { cod_rc: string; nome: string }>();
+      (reps ?? []).forEach((r: any) => {
+        const cod = String(r.cod_rc ?? "").trim();
+        if (cod) repByCod.set(cod, { cod_rc: cod, nome: r.nome });
+      });
+      L("12. repByCod keys:", Array.from(repByCod.keys()));
+
+      const payload: any[] = [];
+      const errors: { linha: number; valores: string; motivo: string }[] = [];
+      let skippedTotal = 0;
+      let codRcAtual = "";
+
+      for (let i = dataStart; i < aoa.length; i++) {
+        const row = aoa[i];
+        if (!row || row.length === 0) continue;
+        const codRaw = String(row[0] ?? "").trim();
+        if (/^totais?$/i.test(codRaw)) continue;
+        if (codRaw) codRcAtual = codRaw;
+
+        const sub = String(row[idxSub >= 0 ? idxSub : 5] ?? "").trim();
+        const sol = String(row[idxSol >= 0 ? idxSol : 7] ?? "").trim();
+        if (!sub && !sol) { skippedTotal++; continue; }
+        if (!codRcAtual) continue;
+
+        const padded = codRcAtual.padStart(6, "0");
+        const noPad = codRcAtual.replace(/^0+/, "") || codRcAtual;
+        const match = repByCod.get(codRcAtual) ?? repByCod.get(padded) ?? repByCod.get(noPad);
+        if (!match) {
+          errors.push({ linha: i + 1, valores: `cod=${codRcAtual}`, motivo: "RC não cadastrado" });
+          continue;
+        }
+
+        for (let m = 0; m < 12; m++) {
+          const fat = parsePlanNumber(row[monthStart + m * 2]);
+          const vol = parsePlanNumber(row[monthStart + m * 2 + 1]);
+          if (!fat && !vol) continue;
+          payload.push({
+            organizacao_id: orgId, user_id: user.id,
+            cod_rc: match.cod_rc, representante: match.nome,
+            linha: sol || sub, solucao: sol || null, subsolucao: sub || null,
+            mes_ano: `${year}-${String(m + 1).padStart(2, "0")}`,
+            meta_faturamento: fat, meta_volume: vol,
+          });
+        }
+      }
+
+      L("13. Resultado: payload=" + payload.length + " errors=" + errors.length + " skippedTotal=" + skippedTotal);
+      if (payload.length > 0) L("14. Amostra payload[0]:", payload[0]);
+
+      let inserted = 0;
+      if (payload.length > 0) {
+        const BATCH = 500;
+        for (let i = 0; i < payload.length; i += BATCH) {
+          const chunk = payload.slice(i, i + BATCH);
+          L("15. Upsert lote " + (i / BATCH + 1) + " (" + chunk.length + " registros)");
+          const { error } = await (supabase.from("metas") as any)
+            .upsert(chunk, { onConflict: "organizacao_id,cod_rc,linha,mes_ano,solucao,subsolucao" });
+          if (error) {
+            L("16. ERRO upsert:", error.message);
+            toast.error("Erro upsert: " + error.message);
+            break;
+          }
+          inserted += chunk.length;
+        }
+        if (inserted > 0) await load();
+      }
+
+      setErrorReport({
+        fileName: file.name, total: payload.length + errors.length,
+        inserted, skipped: errors.length, errors, warnings: [],
+      });
+
+      if (inserted > 0 && errors.length === 0) toast.success(`${inserted} meta(s) importada(s) (ano ${year})`);
+      else if (inserted > 0) toast.warning(`${inserted} importada(s) · ${errors.length} com erro`);
+      else toast.error(`Nenhuma linha válida — ${errors.length} erro(s)`);
+    } catch (e: any) {
+      L("ERRO FATAL:", e.message, e.stack);
+      toast.error("Erro: " + e.message);
+    } finally {
+      setImporting(false);
+    }
+  };
+
   /** Importa planilha "Regional":
    *  aceita tanto sem cabeçalho quanto com cabeçalho de meses em colunas.
    *  A=cod_rc, B=nome RC, F=sub-linha, H=grupo produto (linha),
@@ -1081,6 +1216,21 @@ import { detectRegional12Layout, parsePlanNumber } from "@/utils/crm/excel";
             <Button size="sm" variant="secondary" onClick={() => inputRefOrc.current?.click()} disabled={importing}>
               {importing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 mr-2" />}
               Importar Orçamento RC (Power BI)
+            </Button>
+            <input
+              ref={inputRefRegional}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleRegionalDirect(f);
+                e.target.value = "";
+              }}
+            />
+            <Button size="sm" variant="secondary" onClick={() => inputRefRegional.current?.click()} disabled={importing}>
+              {importing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+              Importar Regional (FAT x VOL)
             </Button>
             <Button size="sm" variant="outline" onClick={() => setTransferOpen(true)}>
               <ArrowRightLeft className="h-4 w-4 mr-2" /> Transferir Metas
