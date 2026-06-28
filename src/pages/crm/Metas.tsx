@@ -682,6 +682,8 @@ import { detectRegional12Layout, parsePlanNumber } from "@/utils/crm/excel";
         : subFatIdx >= 0 ? subFatIdx
         : 10;
 
+      console.info("[metas-import] idxSub=" + idxSub + " idxSol=" + idxSol + " monthStart=" + monthStart + " dataStart=" + dataStart);
+
       let codRcAtual = "";
       let nomeAtual = "";
       aoa.slice(dataStart).forEach((row, offset) => {
