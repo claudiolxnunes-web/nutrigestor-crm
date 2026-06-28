@@ -293,14 +293,31 @@ import { detectRegional12Layout, parsePlanNumber } from "@/utils/crm/excel";
     if (!user || !orgId) return;
     setImporting(true);
     try {
-      // Detecta automaticamente o formato "Orçamento RC" (Power BI):
-      // abas terminadas em _r$ / _% e colunas IDPLANO/CODIGO/SOLUCAO/JANEIRO...
+      // Detecção de formato: Regional (FAT x VOL) ou Orçamento RC (Power BI)
       try {
         const sniffBuf = await file.arrayBuffer();
         const sniffWb = XLSX.read(sniffBuf, { type: "array" });
+        const firstWs = sniffWb.Sheets[sniffWb.SheetNames[0]];
+        const aoaSniff: any[][] = XLSX.utils.sheet_to_json(firstWs, { header: 1, defval: "", raw: true }) as any;
+
+        // 1. Nome do arquivo indica Regional (FAT x VOL)?
+        const nomeArq = norm(file.name);
+        if (nomeArq.includes("fat") && nomeArq.includes("vol")) {
+          console.info("[metas-import] Regional detectado pelo nome do arquivo");
+          setImporting(false);
+          return handleRegional12(file, sniffWb);
+        }
+
+        // 2. Layout Regional (meses na primeira linha ou CODIGO+FATURAMENTO+SOLUCAO)?
+        if (detectRegional12Layout(aoaSniff)) {
+          console.info("[metas-import] Regional detectado por detectRegional12Layout");
+          setImporting(false);
+          return handleRegional12(file, sniffWb);
+        }
+
+        // 3. Orçamento RC (Power BI): abas com R$ ou % + colunas específicas
         const hasOrcSheets = sniffWb.SheetNames.some((n) => /r\$/i.test(n)) ||
           sniffWb.SheetNames.some((n) => /%/.test(n));
-        const firstWs = sniffWb.Sheets[sniffWb.SheetNames[0]];
         const firstRow = XLSX.utils.sheet_to_json<any>(firstWs, { defval: "", raw: true })[0] ?? {};
         const cols = Object.keys(firstRow).map((k) => k.toUpperCase());
         const looksLikeOrc = hasOrcSheets &&
@@ -310,16 +327,9 @@ import { detectRegional12Layout, parsePlanNumber } from "@/utils/crm/excel";
           toast.info("Formato Orçamento RC detectado — usando o importador correto.");
           return handleOrcamento(file);
         }
-
-        // Detecta formato "Regional 12 meses" (sem cabeçalho):
-        // Linha 1 já tem dados; A=cod_rc, B=nome, H=grupo produto, K..V = 12 meses (Jan..Dez)
-        const aoaSniff: any[][] = XLSX.utils.sheet_to_json(firstWs, { header: 1, defval: "", raw: true }) as any;
-        if (detectRegional12Layout(aoaSniff)) {
-          setImporting(false);
-          toast.info("Formato Regional (12 meses) detectado — usando o importador correto.");
-          return handleRegional12(file, sniffWb);
-        }
-      } catch { /* segue fluxo normal */ }
+      } catch (e) {
+        console.warn("[metas-import] Sniff falhou:", e);
+      }
 
       // Carrega catálogos para validação/auto-preenchimento
       const [{ data: reps }, { data: vendaLinhas }] = await Promise.all([
