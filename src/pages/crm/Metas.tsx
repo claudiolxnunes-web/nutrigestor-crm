@@ -657,13 +657,20 @@ import { detectRegional12Layout, parsePlanNumber } from "@/utils/crm/excel";
       const colSub = hdr.findIndex((h: string) => h === "subsolucao" || h === "sub solucao");
       const colSol = hdr.findIndex((h: string) => h === "solucao" || h === "solução");
       const colFirstFat = hdr.indexOf("faturamento");
-      const idxSub = colSub >= 0 ? colSub : 2;
-      const idxSol = colSol >= 0 ? colSol : 3;
-      const monthStart = colFirstFat >= 0 ? colFirstFat : 6;
+      const mesesNomes = ["janeiro","fevereiro","marco","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+      const colFirstMonth = hdr.findIndex((h: string) => mesesNomes.some((m) => h.includes(m)));
 
       const subHdr = (aoa[headerIdx + 1] ?? []).map((c: any) => norm(String(c ?? "")));
       const hasSubHeader = subHdr.some((h: string) => h.includes("faturamento") || h.includes("volume"));
+      const subFatIdx = hasSubHeader ? subHdr.findIndex((h: string) => h.includes("faturamento")) : -1;
       const dataStart = headerIdx + (hasSubHeader ? 2 : 1);
+
+      const idxSub = colSub >= 0 ? colSub : 5;
+      const idxSol = colSol >= 0 ? colSol : 7;
+      const monthStart = colFirstFat >= 0 ? colFirstFat
+        : colFirstMonth >= 0 ? colFirstMonth
+        : subFatIdx >= 0 ? subFatIdx
+        : 10;
 
       let codRcAtual = "";
       let nomeAtual = "";
