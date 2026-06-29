@@ -11,7 +11,7 @@ import { toFriendlyAiError, classifyAiError } from "@/lib/aiErrors";
 type Props = { mes: string; refreshKey?: number };
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
-const normalizeProvider = (value: string | null) => value === "openai" ? "openai" : "gemini";
+const normalizeProvider = (value: string | null) => value === "gemini" ? "gemini" : "openai";
 
 export function InsightResumo({ mes, refreshKey = 0 }: Props) {
   const [insight, setInsight] = useState<string>("");

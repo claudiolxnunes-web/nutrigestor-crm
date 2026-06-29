@@ -15,7 +15,7 @@ const fmtPct = (n: number) => {
 };
 
 function normalizeProviderName(provider?: string) {
-  return provider === "openai" ? "openai" : "gemini";
+  return provider === "gemini" ? "gemini" : "openai";
 }
 
 async function processJob(supabase: any, jobId: string) {

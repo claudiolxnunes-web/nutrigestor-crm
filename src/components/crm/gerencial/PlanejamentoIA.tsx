@@ -20,7 +20,7 @@ export function PlanejamentoIA() {
   const [scheduling, setScheduling] = useState(false);
   const [plano, setPlano] = useState<any>(null);
   const [dataBase, setDataBase] = useState(new Date());
-  const [provider, setProvider] = useState(() => localStorage.getItem("ai_provider") || "gemini");
+  const [provider, setProvider] = useState(() => localStorage.getItem("ai_provider") || "openai");
 
   const semanaInfo = {
     numero: getWeek(dataBase, { weekStartsOn: 0 }),

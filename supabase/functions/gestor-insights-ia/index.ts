@@ -19,10 +19,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      console.error("[DEBUG] LOVABLE_API_KEY não encontrada no ambiente");
-      throw new Error("Configuração de API (Gateway) pendente. Por favor, contate o suporte.");
+    if (!OPENAI_KEY && !LOVABLE_API_KEY) {
+      console.error("[DEBUG] Nenhuma chave de IA configurada (OPENAI_API_KEY ou LOVABLE_API_KEY)");
+      throw new Error("Nenhum provedor de IA configurado. Configure OPENAI_API_KEY nas secrets do Supabase.");
     }
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
