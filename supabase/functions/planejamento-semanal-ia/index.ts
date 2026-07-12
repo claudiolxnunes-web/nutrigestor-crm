@@ -5,17 +5,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-function normalizeProviderName(provider?: string) {
-  return provider === "gemini" ? "gemini" : "openai";
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!OPENAI_KEY && !LOVABLE_API_KEY) throw new Error("Nenhum provedor de IA configurado");
+    if (!OPENAI_KEY) throw new Error("OPENAI_API_KEY não configurada");
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -29,10 +24,10 @@ Deno.serve(async (req) => {
     const { data: { user } } = await userClient.auth.getUser();
     if (!user) throw new Error("Não autenticado");
 
-    const { mes_referencia, semana_ano, provider, force } = await req.json();
+    const { mes_referencia, semana_ano, force } = await req.json();
     if (!mes_referencia || !semana_ano) throw new Error("Parâmetros mes_referencia e semana_ano são obrigatórios");
 
-    const normalizedProvider = normalizeProviderName(provider);
+    const normalizedProvider = "openai";
 
     // 1) Identifica papel e organização
     const { data: membro } = await supabase.from("organizacao_membros")
@@ -130,9 +125,9 @@ Estrutura JSON (DEVE ESTAR ENTRE TAGS <FOLLOWUP_JSON> e </FOLLOWUP_JSON>):
 
 Seja motivador, use os nomes reais dos clientes fornecidos.`;
 
-    const model = normalizedProvider === "openai" ? "gpt-4o-mini" : "google/gemini-2.5-flash";
-    const apiUrl = normalizedProvider === "openai" ? "https://api.openai.com/v1/chat/completions" : "https://ai.gateway.lovable.dev/v1/chat/completions";
-    const apiKey = normalizedProvider === "openai" ? Deno.env.get("OPENAI_API_KEY") : LOVABLE_API_KEY;
+    const model = "gpt-4o-mini";
+    const apiUrl = "https://api.openai.com/v1/chat/completions";
+    const apiKey = OPENAI_KEY;
 
     const aiResp = await fetch(apiUrl, {
       method: "POST",

@@ -7,9 +7,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
-  let provider: "openai" | "lovable" | "none" = "none";
+  let provider: "openai" | "none" = "none";
   let model = "";
   let authStatus: "ok" | "invalid" | "no_credits" | "missing" | "error" = "missing";
   let message = "";
@@ -34,17 +33,12 @@ Deno.serve(async (req) => {
         authStatus = "error";
         message = `OpenAI retornou status ${r.status}.`;
       }
-    } catch (e) {
+    } catch {
       authStatus = "error";
       message = "Falha ao validar a chave da OpenAI.";
     }
-  } else if (LOVABLE_API_KEY) {
-    provider = "lovable";
-    model = "google/gemini-2.5-flash";
-    authStatus = "ok";
-    message = "Usando IA gerenciada pela plataforma (créditos compartilhados).";
   } else {
-    message = "Nenhum provedor de IA configurado.";
+    message = "OPENAI_API_KEY não configurada. Adicione nas secrets do Supabase.";
   }
 
   return new Response(

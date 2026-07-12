@@ -20,9 +20,9 @@ Deno.serve(async (req) => {
 
   try {
     const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!OPENAI_KEY && !LOVABLE_API_KEY) {
-      console.error("[DEBUG] Nenhuma chave de IA configurada (OPENAI_API_KEY ou LOVABLE_API_KEY)");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_KEY && !OPENAI_API_KEY) {
+      console.error("[DEBUG] Nenhuma chave de IA configurada (OPENAI_API_KEY ou OPENAI_API_KEY)");
       throw new Error("Nenhum provedor de IA configurado. Configure OPENAI_API_KEY nas secrets do Supabase.");
     }
 
@@ -462,64 +462,32 @@ REGRAS ADICIONAIS:
 - Destaque se a positivação está focada em poucos clientes ou se há recuperação de inativos.
 - Cite nomes e números reais do contexto.`;
 
-    const AI_PROVIDERS = [
-      { name: "openai", model: "gpt-4o", key: Deno.env.get("OPENAI_API_KEY") },
-      { name: "gemini", model: "gemini-2.0-flash", key: Deno.env.get("LOVABLE_API_KEY") },
-      { name: "deepseek", model: "deepseek/deepseek-chat", key: Deno.env.get("DEEPSEEK_API_KEY") },
-      { name: "perplexity", model: "perplexity/sonar-reasoning", key: Deno.env.get("PERPLEXITY_API_KEY") },
-    ];
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY não configurada");
 
-    const providerName = req.headers.get("x-ai-provider") ?? "openai";
-    let provider = AI_PROVIDERS.find(p => p.name === providerName) ?? AI_PROVIDERS[0];
-    
-    // Fallback if requested key is missing
-    if (!provider.key) {
-      console.warn(`Provider ${provider.name} sem chave, usando fallback...`);
-      provider = AI_PROVIDERS.find(p => !!p.key) ?? AI_PROVIDERS[0];
-    }
-
-    const getAiConfig = (p: typeof AI_PROVIDERS[0]) => {
-      // Use generic gateway for everything except OpenAI (if requested directly)
-      const useGateway = p.name !== "openai";
-      
-      return {
-        url: useGateway ? "https://ai.gateway.lovable.dev/v1/chat/completions" : "https://api.openai.com/v1/chat/completions",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${useGateway ? Deno.env.get("LOVABLE_API_KEY") : p.key}`
-        },
-        body: {
-          model: p.model,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Dados da operação:\n\n${JSON.stringify(contexto, null, 2)}` },
-          ],
-        }
-      };
-    };
-
-    let config = getAiConfig(provider);
-    let aiResp = await fetch(config.url, {
+    let aiResp = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
-      headers: config.headers,
-      body: JSON.stringify(config.body),
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Dados da operação:\n\n${JSON.stringify(contexto, null, 2)}` },
+        ],
+      }),
     });
-    
-    console.log(`[DEBUG] Provedor: ${provider.name}, Status HTTP: ${aiResp.status}`);
-    
+
+    console.log(`[DEBUG] OpenAI status: ${aiResp.status}`);
+
     if (!aiResp.ok) {
       const errText = await aiResp.clone().text();
-      console.error(`[DEBUG] Erro provedor ${provider.name}: ${aiResp.status} - ${errText}`);
+      console.error(`[DEBUG] Erro OpenAI: ${aiResp.status} - ${errText}`);
     }
 
-    // AUTO-FALLBACK: Se der erro, tenta os outros provedores em ordem
     if (!aiResp.ok) {
-
-      console.warn(`Provedor ${provider.name} falhou com status ${aiResp.status}. Tentando fallbacks...`);
-      for (const fallbackProvider of AI_PROVIDERS) {
-        if (fallbackProvider.name === provider.name || !fallbackProvider.key) continue;
-        
-        console.log(`Tentando fallback com ${fallbackProvider.name}...`);
+      for (const fallbackProvider of []) {
+        if (false) continue;
+        console.log(`Tentando fallback com ${fallbackProvider}...`);
         const fallbackConfig = getAiConfig(fallbackProvider);
 
         const retryResp = await fetch(fallbackConfig.url, {

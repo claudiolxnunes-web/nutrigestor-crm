@@ -6,7 +6,7 @@ import { Bot, CheckCircle2, AlertTriangle, XCircle, Loader2, RefreshCw } from "l
 import { Button } from "@/components/ui/button";
 
 type Status = {
-  provider: "openai" | "lovable" | "none";
+  provider: "openai" | "none";
   model: string;
   authStatus: "ok" | "invalid" | "no_credits" | "missing" | "error";
   message: string;
@@ -25,9 +25,7 @@ export function AIProviderStatus() {
 
   useEffect(() => { void carregar(); }, []);
 
-  const providerLabel =
-    data?.provider === "openai" ? "OpenAI (sua chave)" :
-    data?.provider === "lovable" ? "Gemini (Lovable AI)" : "Nenhum";
+  const providerLabel = data?.provider === "openai" ? "OpenAI (GPT-4)" : "Não configurado";
 
   const statusBadge = () => {
     if (loading) return <Badge variant="secondary" className="gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Verificando…</Badge>;
@@ -54,20 +52,17 @@ export function AIProviderStatus() {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-1">
-            <p className="text-xs font-semibold text-primary uppercase tracking-wide">Status da Infraestrutura de IA</p>
+            <p className="text-xs font-semibold text-primary uppercase tracking-wide">Status da IA</p>
             <Button size="sm" variant="ghost" onClick={carregar} disabled={loading} className="h-6 px-2">
               {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
             </Button>
           </div>
           <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="text-sm font-medium">Configuração atual: {providerLabel}</span>
+            <span className="text-sm font-medium">Provedor: {providerLabel}</span>
             {data?.model && <span className="text-xs text-muted-foreground">· {data.model}</span>}
             {statusBadge()}
           </div>
-          <p className="text-xs text-muted-foreground">
-            {data?.message ?? "Consultando provedor…"} 
-            {data?.provider === "openai" && " (O seletor acima permite alternar para outros modelos se sua chave OpenAI estiver com limite)"}
-          </p>
+          <p className="text-xs text-muted-foreground">{data?.message ?? "Consultando provedor…"}</p>
         </div>
       </div>
     </Card>

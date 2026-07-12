@@ -139,7 +139,6 @@ export function InsightResumo({ mes, refreshKey = 0 }: Props) {
                 onChange={(e) => handleProviderChange(e.target.value)}
                 className="text-[10px] h-6 bg-background border rounded px-1.5 font-bold uppercase tracking-wider outline-none focus:ring-1 focus:ring-primary"
               >
-                <option value="gemini">Gemini</option>
                 <option value="openai">OpenAI</option>
               </select>
               <Button size="sm" variant="ghost" onClick={() => carregar(true)} disabled={loading || polling} className="h-6 px-2">

@@ -14,10 +14,6 @@ const fmtPct = (n: number) => {
   return `${(n * 100).toFixed(2)}%`;
 };
 
-function normalizeProviderName(provider?: string) {
-  return provider === "gemini" ? "gemini" : "openai";
-}
-
 async function processJob(supabase: any, jobId: string) {
   try {
     const { data: job, error: jobFetchError } = await supabase
@@ -38,7 +34,7 @@ async function processJob(supabase: any, jobId: string) {
       .eq("id", jobId);
 
     const { mes, modo, provider: providerName, organizacao_id: orgId } = job;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
     // --- REUSE DATA FETCHING LOGIC FROM gestor-insights-ia ---
     // (In a real scenario, we might want to share this code, but here we inline/adapt it)
@@ -123,59 +119,24 @@ async function processJob(supabase: any, jobId: string) {
       ? `Você é um analista de vendas sênior B2B. Gere um insight EXECUTIVO em até 3 frases em português. Mencione realizado+carteira vs meta.`
       : `Você é um consultor de vendas B2B sênior. Analise os dados e produza um diagnóstico estratégico estruturado em Markdown com as seções: ## 📊 Diagnóstico, ## 👥 Representantes, ## 💡 Plano de Ação. Forneça soluções de CURTO e MÉDIO prazo.`;
 
-    const AI_PROVIDERS = [
-      { name: "gemini", model: "google/gemini-2.5-flash", key: LOVABLE_API_KEY, gateway: true },
-      { name: "openai", model: "gpt-4o-mini", key: Deno.env.get("OPENAI_API_KEY"), gateway: false },
-    ];
-    const normalizedProviderName = normalizeProviderName(providerName);
-    const requestedProvider = AI_PROVIDERS.find(p => p.name === normalizedProviderName && p.key);
-    let provider = requestedProvider ?? AI_PROVIDERS.find(p => p.key) ?? AI_PROVIDERS[0];
-    const fallbackProviders = AI_PROVIDERS.filter(p => p.key && p.name !== provider.name);
+    if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY não configurada");
 
-    const getConfig = (p: typeof AI_PROVIDERS[0]) => ({
-      url: p.gateway ? "https://ai.gateway.lovable.dev/v1/chat/completions" : "https://api.openai.com/v1/chat/completions",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${p.gateway ? LOVABLE_API_KEY : p.key}`
-      },
-      body: {
-        model: p.model,
+    const aiResp = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Dados:\n${JSON.stringify(contexto)}` },
         ],
-      }
+      })
     });
-
-    let aiResp = await fetch(getConfig(provider).url, {
-      method: "POST",
-      headers: getConfig(provider).headers,
-      body: JSON.stringify(getConfig(provider).body)
-    });
-    let lastErrorText = aiResp.ok ? "" : await aiResp.clone().text();
-    console.log(`[QUEUE] Provider ${provider.name} returned ${aiResp.status}`);
 
     if (!aiResp.ok) {
-      for (const fallbackProvider of fallbackProviders) {
-        console.warn(`[QUEUE] ${provider.name} failed (${aiResp.status}). Trying ${fallbackProvider.name} fallback.`);
-        const fallbackConfig = getConfig(fallbackProvider);
-        const retryResp = await fetch(fallbackConfig.url, {
-          method: "POST",
-          headers: fallbackConfig.headers,
-          body: JSON.stringify(fallbackConfig.body)
-        });
-        if (retryResp.ok) {
-          aiResp = retryResp;
-          provider = fallbackProvider;
-          lastErrorText = "";
-          break;
-        }
-        lastErrorText = await retryResp.clone().text();
-        console.warn(`[QUEUE] ${fallbackProvider.name} fallback failed (${retryResp.status}): ${lastErrorText.slice(0, 500)}`);
-      }
+      const errText = await aiResp.text();
+      throw new Error(`OpenAI error: ${aiResp.status} - ${errText.slice(0, 300)}`);
     }
-
-    if (!aiResp.ok) throw new Error(`AI Provider error: ${aiResp.status} - ${lastErrorText.slice(0, 300)}`);
 
     const aiData = await aiResp.json();
     const insight = aiData.choices?.[0]?.message?.content ?? "";
@@ -187,7 +148,7 @@ async function processJob(supabase: any, jobId: string) {
         status: "completed",
         insight,
         contexto,
-        provider: provider.name,
+        provider: providerName,
         completed_at: new Date().toISOString()
       })
       .eq("id", jobId);
@@ -222,8 +183,8 @@ Deno.serve(async (req) => {
     // Admin client to handle queue
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
 
-    const { action, jobId, mes, modo, provider } = await req.json();
-    const normalizedProvider = normalizeProviderName(provider);
+    const { action, jobId, mes, modo } = await req.json();
+    const normalizedProvider = "openai";
 
     if (action === "enqueue") {
       // 1) Verify org

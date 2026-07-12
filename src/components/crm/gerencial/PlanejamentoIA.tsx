@@ -131,7 +131,6 @@ export function PlanejamentoIA() {
               }}
               className="text-[10px] h-9 bg-white border rounded-lg px-3 font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-primary/20"
             >
-              <option value="gemini">Gemini 2.5</option>
               <option value="openai">GPT-4o mini</option>
             </select>
           <Button 

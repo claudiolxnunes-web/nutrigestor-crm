@@ -194,7 +194,6 @@ export function InsightsCompletos({ mes, refreshKey = 0 }: Props) {
               onChange={(e) => handleProviderChange(e.target.value)}
               className="text-[10px] h-8 bg-background border rounded px-2 font-bold uppercase tracking-wider outline-none focus:ring-1 focus:ring-primary"
             >
-              <option value="gemini">Gemini (2.5 Flash)</option>
               <option value="openai">OpenAI (GPT-4o mini)</option>
             </select>
             <Button size="sm" onClick={() => carregar(true)} disabled={loading || polling} variant="outline" className="h-8">

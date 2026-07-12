@@ -1,6 +1,6 @@
   import { Helmet } from "react-helmet-async";
  
- const SITE_URL = "https://soil-to-client.lovable.app";
+ const SITE_URL = "https://nutrigestor-crm.netlify.app";
  const APP_NAME = "Agro_RC CRM";
  
  interface SeoProps {

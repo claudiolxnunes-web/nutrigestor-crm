@@ -55,7 +55,7 @@ export function classifyAiError(message: string, provider?: string): FriendlyAiE
     return {
       kind: "timeout",
       title: "Tempo esgotado ao consultar a IA",
-      description: `${prov} demorou demais para responder. Tente novamente em instantes ou alterne para outro provedor (Gemini costuma ser mais rápido).`,
+      description: `${prov} demorou demais para responder. Tente novamente em instantes.`,
       raw,
     };
   }
