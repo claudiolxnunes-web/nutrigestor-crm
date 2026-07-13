@@ -1,0 +1,77 @@
+# Query: NutriGestor CRM
+# ContextLines: 1
+
+17 results - 8 files
+
+index.html:
+   11      <title>
+   12:       NutriGestor CRM | Gestão Inteligente para Representantes Comerciais
+   13      </title>
+
+   16        name="description"
+   17:       content="NutriGestor CRM é uma plataforma de gestão comercial para equipes de representantes em nutrição animal, com CRM, planejamento SMART, pipeline, metas, analytics e inteligência artificial."
+   18      />
+
+   26        name="author"
+   27:       content="NutriGestor CRM"
+   28      />
+
+   60        name="apple-mobile-web-app-title"
+   61:       content="NutriGestor CRM"
+   62      />
+
+   97        property="og:title"
+   98:       content="NutriGestor CRM | Gestão Inteligente para Representantes Comerciais"
+   99      />
+
+  119        name="twitter:title"
+  120:       content="NutriGestor CRM"
+  121      />
+
+README.md:
+    1: # NutriGestor CRM
+    2  
+
+    4  
+    5: O NutriGestor CRM foi desenvolvido para transformar equipes comerciais em operações orientadas por dados, planejamento, indicadores e inteligência comercial.
+    6  
+
+  109  
+  110: O NutriGestor CRM é o primeiro projeto operacional oficialmente integrado ao ecossistema WorkDev e serve como projeto piloto para evolução da plataforma.
+  111  
+
+  129  
+  130: © 2026 NutriGestor CRM
+
+supabase_sql_fix_completo.sql:
+  1  -- =============================================================================
+  2: -- FIX COMPLETO — NutriGestor CRM
+  3  -- Cole no SQL Editor do Supabase e execute.
+
+public\llms.txt:
+  1:  # NutriGestor CRM
+  2   
+
+public\manifest.json:
+  1  {
+  2:   "name": "NutriGestor CRM",
+  3    "short_name": "NutriGestor",
+
+src\components\Seo.tsx:
+  3   const SITE_URL = "https://nutrigestor-crm.netlify.app";
+  4:  const APP_NAME = "NutriGestor CRM";
+  5   
+
+src\pages\Auth.tsx:
+  183         
+  184:        <Seo title="Entrar ou criar conta" description="Acesse o NutriGestor CRM ou crie sua conta com 14 dias de trial grátis para gerir representantes, clientes e metas comerciais." path="/auth" />
+  185         
+
+  322                         href={`https://wa.me/5500000000000?text=${encodeURIComponent(
+  323:                          "Olá! Não recebi o e-mail de confirmação do NutriGestor CRM. Meu e-mail de cadastro: " + (email || "(informe aqui)")
+  324                         )}`}
+
+src\pages\Index.tsx:
+  181       <>
+  182:        <Seo title="Dashboard" description="Visão geral da operação comercial: pedidos em aberto, próximas visitas e alertas gerenciais do NutriGestor CRM." path="/" />
+  183          <PageHeader 

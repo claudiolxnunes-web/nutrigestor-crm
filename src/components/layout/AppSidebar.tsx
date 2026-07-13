@@ -138,7 +138,7 @@ export const AppSidebar = React.memo(() => {
             </div>
             {!collapsed && (
               <div className="overflow-hidden animate-in fade-in slide-in-from-left-4 duration-500">
-                <div className="text-lg font-black tracking-tightest text-sidebar-foreground leading-none mb-1">Agro_RC</div>
+                <div className="text-lg font-black tracking-tightest text-sidebar-foreground leading-none mb-1">NutriGestor</div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-sidebar-primary animate-pulse" />
                   <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-sidebar-foreground/40">CRM Intelligence</p>

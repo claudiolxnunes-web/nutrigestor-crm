@@ -178,7 +178,7 @@ const MeuPainel = () => {
 
   return (
     <div className="space-y-6 pb-20">
-      <Seo title="Meu Painel" description="Resumo de performance Agro_RC" path="/meu-painel" />
+      <Seo title="Meu Painel" description="Resumo de performance NutriGestor" path="/meu-painel" />
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <PageHeader title="Meu Painel" subtitle="Visão 360° da sua performance comercial" />

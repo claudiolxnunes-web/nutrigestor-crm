@@ -1,6 +1,6 @@
 {
-  "name": "Agro_RC CRM",
-  "short_name": "Agro_RC",
+  "name": "NutriGestor CRM",
+  "short_name": "NutriGestor",
   "description": "CRM de representantes comerciais para o agro",
   "start_url": "/campo",
   "display": "standalone",

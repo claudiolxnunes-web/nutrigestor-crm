@@ -65,7 +65,7 @@ const AppLayout = () => {
                 <div className="h-6 w-[1px] bg-slate-200 dark:bg-white/10" />
                 <GlobalSearch />
                 <div className="h-6 w-[1px] bg-slate-200 dark:bg-white/10" />
-                <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] hidden lg:inline">Agro_RC &bull; CRM de Performance</span>
+                <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] hidden lg:inline">NutriGestor &bull; CRM de Performance</span>
               </div>
               <div className="flex items-center gap-6">
                 <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-slate-400 hover:text-primary transition-all relative">
@@ -93,7 +93,7 @@ const AppLayout = () => {
           {!isCampo && (
             <header className="sticky top-0 z-30 h-16 flex items-center justify-between border-b border-white/20 dark:border-white/5 bg-white/40 dark:bg-background/40 backdrop-blur-xl px-6 md:hidden">
               <SidebarTrigger className="h-10 w-10 hover:bg-white dark:hover:bg-white/5 transition-all shadow-sm rounded-xl" />
-              <div className="font-black text-primary tracking-tightest text-xl absolute left-1/2 -translate-x-1/2">Agro_RC</div>
+              <div className="font-black text-primary tracking-tightest text-xl absolute left-1/2 -translate-x-1/2">NutriGestor</div>
               <div className="h-10 w-10 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary">
                 <UserCircle className="h-6 w-6" />
               </div>

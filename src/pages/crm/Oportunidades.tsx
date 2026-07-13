@@ -132,7 +132,7 @@ export default function Oportunidades() {
 
   return (
      <div className="space-y-6 pb-20">
-       <Seo title="Pipeline de Oportunidades" description="Gestão visual do funil de vendas Agro_RC" path="/oportunidades" />
+       <Seo title="Pipeline de Oportunidades" description="Gestão visual do funil de vendas NutriGestor" path="/oportunidades" />
        <PageHeader 
          title="Oportunidades" 
          subtitle="Pipeline comercial inteligente — arraste para evoluir" 

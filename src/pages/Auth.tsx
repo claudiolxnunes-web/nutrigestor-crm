@@ -181,7 +181,7 @@ const Auth = () => {
        <div aria-hidden="true" className="absolute top-0 -left-4 w-72 h-72 bg-primary/10 rounded-full blur-[100px] animate-pulse" />
        <div aria-hidden="true" className="absolute bottom-0 -right-4 w-96 h-96 bg-primary/5 rounded-full blur-[100px]" />
        
-       <Seo title="Entrar ou criar conta" description="Acesse o Agro_RC CRM ou crie sua conta com 14 dias de trial grátis para gerir representantes, clientes e metas comerciais." path="/auth" />
+       <Seo title="Entrar ou criar conta" description="Acesse o NutriGestor CRM ou crie sua conta com 14 dias de trial grátis para gerir representantes, clientes e metas comerciais." path="/auth" />
        
        <motion.div 
          initial={{ opacity: 0, y: 20 }}
@@ -203,7 +203,7 @@ const Auth = () => {
              >
                AR
              </motion.div>
-             <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tightest mb-3">Agro_RC</h1>
+             <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tightest mb-3">NutriGestor</h1>
              <div className="flex items-center gap-3 px-5 py-2 bg-slate-50 dark:bg-white/5 rounded-full border border-slate-100 dark:border-white/5">
                <ShieldCheck className="h-4 w-4 text-emerald-500" />
                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Enterprise Secure</span>
@@ -320,7 +320,7 @@ const Auth = () => {
                      </button>
                      <a
                        href={`https://wa.me/5500000000000?text=${encodeURIComponent(
-                         "Olá! Não recebi o e-mail de confirmação do Agro_RC CRM. Meu e-mail de cadastro: " + (email || "(informe aqui)")
+                         "Olá! Não recebi o e-mail de confirmação do NutriGestor CRM. Meu e-mail de cadastro: " + (email || "(informe aqui)")
                        )}`}
                        target="_blank"
                        rel="noopener noreferrer"
@@ -336,7 +336,7 @@ const Auth = () => {
          </div>
          
          <p className="text-center mt-8 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
-           Agro_RC &copy; 2024 &bull; Todos os direitos reservados
+           NutriGestor &copy; 2024 &bull; Todos os direitos reservados
          </p>
        </motion.div>
  

@@ -179,7 +179,7 @@ const Index = () => {
 
    return (
      <>
-       <Seo title="Dashboard" description="Visão geral da operação comercial: pedidos em aberto, próximas visitas e alertas gerenciais do Agro_RC CRM." path="/" />
+       <Seo title="Dashboard" description="Visão geral da operação comercial: pedidos em aberto, próximas visitas e alertas gerenciais do NutriGestor CRM." path="/" />
         <PageHeader 
           title="Olá, bem-vindo de volta!" 
           subtitle="Aqui está o que está acontecendo com sua operação comercial hoje." 
